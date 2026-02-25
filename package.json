@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "bin": {
+    "ts-starter": "./index.ts"
+  },
   "scripts": {
     "start": "bun index.ts",
     "build": "bun build --compile index.ts --outfile dist/create-ts",
