@@ -149,6 +149,16 @@ export function nxJsonContent(): string {
   );
 }
 
+export function knipJsonContent(): string {
+  return JSON.stringify(
+    {
+      ignoreDependencies: ["biome-plugin-no-type-assertion"],
+    },
+    null,
+    2
+  );
+}
+
 export function sampleIndexContent(): string {
   return `console.log("Hello, world!");\n`;
 }
