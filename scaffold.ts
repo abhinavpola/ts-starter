@@ -3,17 +3,24 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
   biomeJsonContent,
+  bunfigTomlContent,
   ciWorkflowContent,
+  claudeCodeStyleContent,
   gitignoreContent,
   gitTownConfigContent,
   huskyPreCommitContent,
   knipJsonContent,
+  loggerContent,
   nxJsonContent,
   packageJsonContent,
   sampleIndexContent,
   sampleTestContent,
+  testSetupContent,
   type TemplateOptions,
   tsconfigContent,
+  vscodeLaunchContent,
+  vscodeExtensionsContent,
+  vscodeSettingsContent,
 } from "./templates.ts";
 
 type ScaffoldOptions = TemplateOptions;
@@ -28,11 +35,15 @@ export async function scaffold(opts: ScaffoldOptions): Promise<void> {
   const srcDir = join(dir, "src");
   const huskyDir = join(dir, ".husky");
   const workflowsDir = join(dir, ".github", "workflows");
+  const vscodeDir = join(dir, ".vscode");
+  const claudeRulesDir = join(dir, ".claude", "rules");
 
   await Promise.all([
     mkdir(srcDir, { recursive: true }),
     mkdir(huskyDir, { recursive: true }),
     mkdir(workflowsDir, { recursive: true }),
+    mkdir(vscodeDir, { recursive: true }),
+    mkdir(claudeRulesDir, { recursive: true }),
   ]);
 
   const preCommitPath = join(huskyDir, "pre-commit");
@@ -45,8 +56,15 @@ export async function scaffold(opts: ScaffoldOptions): Promise<void> {
     Bun.write(join(dir, "knip.json"), knipJsonContent()),
     Bun.write(join(dir, "git-town.toml"), gitTownConfigContent()),
     Bun.write(join(srcDir, "index.ts"), sampleIndexContent()),
+    Bun.write(join(srcDir, "logger.ts"), loggerContent()),
     Bun.write(join(srcDir, "index.test.ts"), sampleTestContent()),
+    Bun.write(join(srcDir, "test-setup.ts"), testSetupContent()),
     Bun.write(join(workflowsDir, "ci.yml"), ciWorkflowContent()),
+    Bun.write(join(vscodeDir, "settings.json"), vscodeSettingsContent(opts)),
+    Bun.write(join(vscodeDir, "extensions.json"), vscodeExtensionsContent()),
+    Bun.write(join(vscodeDir, "launch.json"), vscodeLaunchContent()),
+    Bun.write(join(dir, "bunfig.toml"), bunfigTomlContent()),
+    Bun.write(join(claudeRulesDir, "code-style.md"), claudeCodeStyleContent()),
     Bun.write(preCommitPath, huskyPreCommitContent()).then(async (n) => {
       await Bun.$`chmod +x ${preCommitPath}`.quiet();
       return n;

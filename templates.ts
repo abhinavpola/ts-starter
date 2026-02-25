@@ -102,9 +102,13 @@ export function biomeJsonContent(): string {
           },
           suspicious: {
             noExplicitAny: "error",
+            noConsole: "error",
           },
           style: {
             useBlockStatements: "error",
+          },
+          nursery: {
+            noFloatingPromises: "error",
           },
         },
       },
@@ -159,8 +163,29 @@ export function knipJsonContent(): string {
   );
 }
 
+export function loggerContent(): string {
+  return `export function iLog(...args: unknown[]): void {
+  // biome-ignore lint/suspicious/noConsole: logger module is the only place allowed to use console
+  console.log(...args);
+}
+
+export function wLog(...args: unknown[]): void {
+  // biome-ignore lint/suspicious/noConsole: logger module is the only place allowed to use console
+  console.warn(...args);
+}
+
+export function eLog(...args: unknown[]): void {
+  // biome-ignore lint/suspicious/noConsole: logger module is the only place allowed to use console
+  console.error(...args);
+}
+`;
+}
+
 export function sampleIndexContent(): string {
-  return `console.log("Hello, world!");\n`;
+  return `import { iLog } from "./logger.ts";
+
+iLog("Hello, world!");
+`;
 }
 
 export function sampleTestContent(): string {
@@ -199,11 +224,109 @@ jobs:
 }
 
 export function huskyPreCommitContent(): string {
-  return `bun run check\n`;
+  return `bun run check
+bun run typecheck
+bun run knip
+bun test
+`;
 }
 
 export function gitTownConfigContent(): string {
   return `[branches]
 main = "main"
+`;
+}
+
+export function vscodeSettingsContent(opts: TemplateOptions): string {
+  const settings: Record<string, unknown> = {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "quickfix.biome": "explicit",
+      "source.organizeImports.biome": "explicit",
+    },
+  };
+
+  if (opts.typescript === "tsgo") {
+    settings["typescript.validate.enable"] = false;
+    settings["javascript.validate.enable"] = false;
+  }
+
+  return JSON.stringify(settings, null, 2);
+}
+
+export function vscodeExtensionsContent(): string {
+  return JSON.stringify(
+    {
+      recommendations: ["biomejs.biome"],
+    },
+    null,
+    2
+  );
+}
+
+export function vscodeLaunchContent(): string {
+  return JSON.stringify(
+    {
+      version: "0.2.0",
+      configurations: [
+        {
+          type: "bun",
+          request: "launch",
+          name: "Debug index.ts",
+          program: "${workspaceFolder}/src/index.ts",
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
+export function bunfigTomlContent(): string {
+  return `[test]
+preload = ["./src/test-setup.ts"]
+`;
+}
+
+export function testSetupContent(): string {
+  return `// Stub environment variables for tests
+// Add your env var stubs here, e.g.:
+// process.env.DATABASE_URL = "postgres://localhost/test";
+`;
+}
+
+export function claudeCodeStyleContent(): string {
+  return `---
+paths:
+  - "**/*.{ts,tsx}"
+---
+
+# Code Style Rules
+
+- When validating external data (API responses, user input, stored state), use Zod schemas with \`safeParse\` instead of type assertions (\`as\`) or manually written type guards.
+- Prefer \`neverthrow\` \`Result\`/\`ResultAsync\` over \`try\`/\`catch\`. Use \`Result.fromThrowable\` or \`ResultAsync.fromPromise\` at boundaries where exceptions can occur, and propagate errors via \`.map\`/\`.andThen\`/\`.match\` chains instead of catching them imperatively.
+- When exhaustively switching on a discriminated union, always add a \`default\` branch that uses \`satisfies never\` to catch unhandled cases at compile time:
+  \`\`\`ts
+  default: {
+    const _exhaustive: never = value;
+    _exhaustive satisfies never;
+    break;
+  }
+  \`\`\`
+- Functions must not take more than 2 positional parameters. When a function needs more than 2 inputs, use a named-argument object instead:
+  \`\`\`ts
+  // ✗ too many positional params
+  function run(id: string, message: string, apiKey: string) {}
+
+  // ✓ named arguments
+  function run({ id, message, apiKey }: { id: string; message: string; apiKey: string }) {}
+  \`\`\`
+- Always use the package.json scripts for linting, fixing, and typechecking — never invoke \`biome\`, \`tsc\`, or \`tsgo\` directly:
+  - Lint: \`bun run check\`
+  - Lint + autofix: \`bun run check:fix\`
+  - Typecheck: \`bun run typecheck\`
+  - Knip: \`bun run knip\`
+- Never let an error go silent. Every error must either be logged or returned as a value and handled.
 `;
 }
