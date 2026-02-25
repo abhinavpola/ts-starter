@@ -207,3 +207,31 @@ export function gitTownConfigContent(): string {
 main = "main"
 `;
 }
+
+export function vscodeSettingsContent(opts: TemplateOptions): string {
+  const settings: Record<string, unknown> = {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "quickfix.biome": "explicit",
+      "source.organizeImports.biome": "explicit",
+    },
+  };
+
+  if (opts.typescript === "tsgo") {
+    settings["typescript.validate.enable"] = false;
+    settings["javascript.validate.enable"] = false;
+  }
+
+  return JSON.stringify(settings, null, 2);
+}
+
+export function vscodeExtensionsContent(): string {
+  return JSON.stringify(
+    {
+      recommendations: ["biomejs.biome"],
+    },
+    null,
+    2
+  );
+}
